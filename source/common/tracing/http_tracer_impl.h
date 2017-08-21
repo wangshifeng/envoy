@@ -82,8 +82,6 @@ public:
   void finalize(Span&) override {}
 };
 
-typedef ConstSingleton<NullFinalizer> NullFinalizerInstance;
-
 /**
  * Finalizer for Spans covering standard request ingress.
  */

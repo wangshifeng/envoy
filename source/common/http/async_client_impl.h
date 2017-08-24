@@ -208,7 +208,7 @@ private:
   const uint64_t stream_id_;
   Router::ProdFilter router_;
   AccessLog::RequestInfoImpl request_info_;
-  Tracing::NullSpan active_span_;
+  Tracing::NullSpan active_span_ = Tracing::NullSpan::instance();
   std::shared_ptr<RouteImpl> route_;
   bool local_closed_{};
   bool remote_closed_{};

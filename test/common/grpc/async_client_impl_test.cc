@@ -219,6 +219,7 @@ public:
         sendData(BufferStringEqual(std::string(HELLO_REQUEST_DATA, HELLO_REQUEST_SIZE)), true));
     std::unique_ptr<HelloFinalizerFactory> finalizer_factory{new MockHelloFinalizerFactory()};
     Tracing::SpanPtr span{new Tracing::MockSpan()};
+    EXPECT_CALL(span, spawnChild_("async test_cluster egress", _)).WillByDefault(ReturnRef(*span));
     request->grpc_request_ =
         grpc_client_->send(*method_descriptor_, request_msg, *request, *span, *finalizer_factory,
                            Optional<std::chrono::milliseconds>());

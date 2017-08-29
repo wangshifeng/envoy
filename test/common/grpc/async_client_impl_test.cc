@@ -24,8 +24,8 @@ namespace Grpc {
 template class AsyncClientImpl<helloworld::HelloRequest, helloworld::HelloReply>;
 template class AsyncStreamImpl<helloworld::HelloRequest, helloworld::HelloReply>;
 
-typedef AsyncSpanFinalizerFactory<helloworld::HelloRequest, helloworld::HelloReply>
-    HelloFinalizerFactory;
+// typedef AsyncSpanFinalizerFactory<helloworld::HelloRequest, helloworld::HelloReply>
+// HelloFinalizerFactory;
 typedef MockAsyncSpanFinalizerFactory<helloworld::HelloRequest, helloworld::HelloReply>
     MockHelloFinalizerFactory;
 
@@ -217,9 +217,11 @@ public:
     EXPECT_CALL(
         *(request->http_stream_),
         sendData(BufferStringEqual(std::string(HELLO_REQUEST_DATA, HELLO_REQUEST_SIZE)), true));
-    std::unique_ptr<HelloFinalizerFactory> finalizer_factory{new MockHelloFinalizerFactory()};
-    Tracing::SpanPtr span{new Tracing::MockSpan()};
-    EXPECT_CALL(span, spawnChild_("async test_cluster egress", _)).WillByDefault(ReturnRef(*span));
+    std::unique_ptr<MockHelloFinalizerFactory> finalizer_factory{new MockHelloFinalizerFactory()};
+    EXPECT_CALL(*finalizer_factory, create_(_, _)).WillOnce(Return(new Tracing::MockFinalizer()));
+    std::unique_ptr<Tracing::MockSpan> span{new Tracing::MockSpan()};
+    EXPECT_CALL(*span, spawnChild_("async test_cluster egress", _))
+        .WillOnce(Return(new Tracing::MockSpan()));
     request->grpc_request_ =
         grpc_client_->send(*method_descriptor_, request_msg, *request, *span, *finalizer_factory,
                            Optional<std::chrono::milliseconds>());
@@ -330,8 +332,11 @@ TEST_F(GrpcAsyncClientImplTest, RequestHttpStartFail) {
   ON_CALL(http_client_, start(_, _)).WillByDefault(Return(nullptr));
   EXPECT_CALL(grpc_callbacks, onFailure(Status::GrpcStatus::Unavailable, ""));
   helloworld::HelloRequest request_msg;
-  std::unique_ptr<HelloFinalizerFactory> finalizer_factory{new MockHelloFinalizerFactory()};
-  Tracing::SpanPtr span{new Tracing::MockSpan()};
+  std::unique_ptr<MockHelloFinalizerFactory> finalizer_factory{new MockHelloFinalizerFactory()};
+  EXPECT_CALL(*finalizer_factory, create_(_, _)).WillOnce(Return(new Tracing::MockFinalizer()));
+  std::unique_ptr<Tracing::MockSpan> span{new Tracing::MockSpan()};
+  EXPECT_CALL(*span, spawnChild_("async test_cluster egress", _))
+      .WillOnce(Return(new Tracing::MockSpan()));
   auto* grpc_request =
       grpc_client_->send(*method_descriptor_, request_msg, grpc_callbacks, *span,
                          *finalizer_factory, Optional<std::chrono::milliseconds>());
@@ -387,8 +392,11 @@ TEST_F(GrpcAsyncClientImplTest, RequestHttpSendHeadersFail) {
       }));
   EXPECT_CALL(grpc_callbacks, onFailure(Status::GrpcStatus::Internal, ""));
   helloworld::HelloRequest request_msg;
-  std::unique_ptr<HelloFinalizerFactory> finalizer_factory{new MockHelloFinalizerFactory()};
-  Tracing::SpanPtr span{new Tracing::MockSpan()};
+  std::unique_ptr<MockHelloFinalizerFactory> finalizer_factory{new MockHelloFinalizerFactory()};
+  EXPECT_CALL(*finalizer_factory, create_(_, _)).WillOnce(Return(new Tracing::MockFinalizer()));
+  std::unique_ptr<Tracing::MockSpan> span{new Tracing::MockSpan()};
+  EXPECT_CALL(*span, spawnChild_("async test_cluster egress", _))
+      .WillOnce(Return(new Tracing::MockSpan()));
   auto* grpc_request =
       grpc_client_->send(*method_descriptor_, request_msg, grpc_callbacks, *span,
                          *finalizer_factory, Optional<std::chrono::milliseconds>());

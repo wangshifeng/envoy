@@ -191,7 +191,8 @@ def envoy_cc_test(name,
                   tags = [],
                   args = [],
                   coverage = True,
-                  local = False):
+                  local = False,
+                  linkopts = []):
     test_lib_tags = []
     if coverage:
       test_lib_tags.append("coverage_test_lib")
@@ -207,7 +208,7 @@ def envoy_cc_test(name,
     native.cc_test(
         name = name,
         copts = envoy_copts(repository, test = True),
-        linkopts = envoy_test_linkopts(),
+        linkopts = linkopts + envoy_test_linkopts(),
         linkstatic = 1,
         malloc = tcmalloc_external_dep(repository),
         deps = [
